@@ -42,17 +42,33 @@ void *routine(void *philos)
 {
 	t_philo philo;
 
+	
 	philo = *(t_philo *)philos;
-	if (pthread_mutex_lock(&philo.fork))
+	philo.arg->flah_nbr++;
+	if (philo.id % 2 == 0)
+		usleep(100);
+	if (pthread_mutex_lock(&philo.arg->timelock))
 		return (NULL);
+	if (philo.arg->time == 0)
+		philo.arg->time = ft_time();
+	if (pthread_mutex_unlock(&philo.arg->timelock))
+		return (NULL);
+	if (pthread_mutex_lock(&philo.fork))
+		return (NULL);	
+	printf("%ld ", ft_time() - philo.arg->time);	
+	printf("philo %d takes the fork %d\n", philo.id, philo.id);
+	printf("%ld ", ft_time() - philo.arg->time);
 	if (pthread_mutex_lock(&philo.arg->philos[philo.id % philo.arg->nph].fork))
 		return (NULL);
-	usleep(100000);	
-	philo.eat_t = ft_time() - philo.arg->time;
-	printf("%d ", philo.eat_t);	
-	printf("%d takes the fork %d\ntakes the fork %d\n", philo.id, philo.id, philo.id % philo.arg->nph + 1);
-	printf("%d is eating\n", philo.id);
-	while (philo.eat_t > ft_time() - philo.arg->time)
+	printf("philo %d takes the fork %d\n", philo.id, philo.id % philo.arg->nph + 1);
+	printf("%ld ", ft_time() - philo.arg->time);
+	printf("philo %d is eating\n", philo.id);
+	if (pthread_mutex_lock(&philo.arg->t))
+		return (NULL);
+	while (philo.arg->te > ft_time() - philo.arg->time)
+		usleep(1000);	
+	if (pthread_mutex_unlock(&philo.arg->t))
+		return (NULL);	
 	if (pthread_mutex_unlock(&philo.fork))
 		return (NULL);
 	if (pthread_mutex_unlock(&philo.arg->philos[philo.id % philo.arg->nph].fork))
@@ -66,15 +82,17 @@ int ft_initialize(char **av, t_args *args)
 
 	i = 0;
 	args->nph = ft_atoi(av[1]);
-	printf("%d\n", args->nph);
+	//printf("%d\n", args->nph);
 	args->td = ft_atoi(av[2]);
 	args->te = ft_atoi(av[3]);
 	args->ts = ft_atoi(av[4]);
 	if (av[5])
 		args->ne = ft_atoi(av[5]);
 	args->philos = malloc(sizeof(t_philo) * args->nph);
-	args->time = ft_time();
-	printf("%ld\n", args->time);
+	//args->time = ft_time();
+	//printf("%ld\n", args->time);
+	args->time = 0;
+	args->flah_nbr = args->nph;
 	while (i < args->nph)
 	{
 		args->philos[i].eat_t = 0;
@@ -83,11 +101,14 @@ int ft_initialize(char **av, t_args *args)
 		pthread_mutex_init(&args->philos[i].fork, NULL);
 		i++;
 	}
+	pthread_mutex_init(&args->timelock, NULL);
 	i = 0;
+	args->flah_nbr = 0;
 	while (i < args->nph)
 	{
 		pthread_create(&args->philos[i].ph, NULL, routine, &args->philos[i]);
-		usleep(100);
+		while (args->flah_nbr == i)
+			usleep(10);
 		i++;
 	}
 	i = 0;
