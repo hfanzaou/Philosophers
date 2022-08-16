@@ -35,9 +35,11 @@ typedef struct s_args
 	int	te;
 	int	ts;
 	int	ne;
-	int curr_t;
+	pthread_mutex_t t;
 	int fi_t;
 	long time;
+	int flah_nbr;
+	pthread_mutex_t timelock;
 	t_philo *philos;
 }	t_args;
 
