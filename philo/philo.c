@@ -1,7 +1,7 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   philo.c                                            :+:      :+:    :+:   */
+/*   philo->c                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: hfanzaou <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
@@ -40,39 +40,34 @@ long ft_time()
 
 void *routine(void *philos)
 {
-	t_philo philo;
+	t_philo *philo;
 
 	
-	philo = *(t_philo *)philos;
-	philo.arg->flah_nbr++;
-	if (philo.id % 2 == 0)
+	philo = (t_philo *)philos;
+	if (philo->id % 2 == 0)
 		usleep(100);
-	if (pthread_mutex_lock(&philo.arg->timelock))
+	if (pthread_mutex_lock(&philo->fork))
 		return (NULL);
-	if (philo.arg->time == 0)
-		philo.arg->time = ft_time();
-	if (pthread_mutex_unlock(&philo.arg->timelock))
+	if (pthread_mutex_lock(&philo->arg->timelock))
 		return (NULL);
-	if (pthread_mutex_lock(&philo.fork))
+	if (philo->arg->time == 0)
+		philo->arg->time = ft_time();
+	if (pthread_mutex_unlock(&philo->arg->timelock))
 		return (NULL);	
-	printf("%ld ", ft_time() - philo.arg->time);	
-	printf("philo %d takes the fork %d\n", philo.id, philo.id);
-	printf("%ld ", ft_time() - philo.arg->time);
-	if (pthread_mutex_lock(&philo.arg->philos[philo.id % philo.arg->nph].fork))
+	printf("%ld ", ft_time() - philo->arg->time);	
+	printf("philo %d takes the fork %d\n", philo->id, philo->id);
+	if (pthread_mutex_unlock(&philo->fork))
 		return (NULL);
-	printf("philo %d takes the fork %d\n", philo.id, philo.id % philo.arg->nph + 1);
-	printf("%ld ", ft_time() - philo.arg->time);
-	printf("philo %d is eating\n", philo.id);
-	if (pthread_mutex_lock(&philo.arg->t))
+	printf("%ld ", ft_time() - philo->arg->time);
+	if (pthread_mutex_lock(&philo->arg->philos[philo->id % philo->arg->nph].fork))
 		return (NULL);
-	while (philo.arg->te > ft_time() - philo.arg->time)
-		usleep(1000);	
-	if (pthread_mutex_unlock(&philo.arg->t))
+	printf("philo %d takes the fork %d\n", philo->id, philo->id % philo->arg->nph + 1);
+	printf("%ld ", ft_time() - philo->arg->time);
+	printf("philo %d is eating\n", philo->id);
+	while (philo->arg->te > ft_time() - philo->arg->time)
+		usleep(10);
+	if (pthread_mutex_unlock(&philo->arg->philos[philo->id % philo->arg->nph].fork))
 		return (NULL);	
-	if (pthread_mutex_unlock(&philo.fork))
-		return (NULL);
-	if (pthread_mutex_unlock(&philo.arg->philos[philo.id % philo.arg->nph].fork))
-		return (NULL);
 	return (NULL);
 }
 
@@ -89,8 +84,6 @@ int ft_initialize(char **av, t_args *args)
 	if (av[5])
 		args->ne = ft_atoi(av[5]);
 	args->philos = malloc(sizeof(t_philo) * args->nph);
-	//args->time = ft_time();
-	//printf("%ld\n", args->time);
 	args->time = 0;
 	args->flah_nbr = args->nph;
 	while (i < args->nph)
@@ -107,8 +100,7 @@ int ft_initialize(char **av, t_args *args)
 	while (i < args->nph)
 	{
 		pthread_create(&args->philos[i].ph, NULL, routine, &args->philos[i]);
-		while (args->flah_nbr == i)
-			usleep(10);
+		usleep(1);
 		i++;
 	}
 	i = 0;
