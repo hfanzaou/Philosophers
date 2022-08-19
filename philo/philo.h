@@ -39,6 +39,7 @@ typedef struct s_args
 	int fi_t;
 	long time;
 	int flah_nbr;
+	pthread_mutex_t print;
 	pthread_mutex_t timelock;
 	t_philo *philos;
 }	t_args;

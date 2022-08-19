@@ -38,36 +38,56 @@ long ft_time()
 	return(time.tv_sec * 1000 + time.tv_usec / 1000);
 }
 
+/*void	ft_eat(t_philo *philo)
+{
+
+	printf("%ld ", ft_time() - philo->arg->time);
+	
+	printf("philo %d is eating\n", philo->id);
+	while (philo->arg->te > ft_time() - philo->arg->time)
+		usleep(10);	
+}*/
+
+void	ft_print(t_philo *philo, const char *s)
+{
+	if (pthread_mutex_lock(&philo->arg->print))
+			return ;
+	printf("%ld ", ft_time() - philo->arg->time);		
+	printf("philo %d %s\n", philo->id, s);
+	if (pthread_mutex_unlock(&philo->arg->print))
+			return ;	
+}
 void *routine(void *philos)
 {
 	t_philo *philo;
 
-	
 	philo = (t_philo *)philos;
-	if (philo->id % 2 == 0)
-		usleep(100);
-	if (pthread_mutex_lock(&philo->fork))
-		return (NULL);
-	if (pthread_mutex_lock(&philo->arg->timelock))
-		return (NULL);
-	if (philo->arg->time == 0)
-		philo->arg->time = ft_time();
-	if (pthread_mutex_unlock(&philo->arg->timelock))
-		return (NULL);	
-	printf("%ld ", ft_time() - philo->arg->time);	
-	printf("philo %d takes the fork %d\n", philo->id, philo->id);
-	if (pthread_mutex_unlock(&philo->fork))
-		return (NULL);
-	printf("%ld ", ft_time() - philo->arg->time);
-	if (pthread_mutex_lock(&philo->arg->philos[philo->id % philo->arg->nph].fork))
-		return (NULL);
-	printf("philo %d takes the fork %d\n", philo->id, philo->id % philo->arg->nph + 1);
-	printf("%ld ", ft_time() - philo->arg->time);
-	printf("philo %d is eating\n", philo->id);
-	while (philo->arg->te > ft_time() - philo->arg->time)
-		usleep(10);
-	if (pthread_mutex_unlock(&philo->arg->philos[philo->id % philo->arg->nph].fork))
-		return (NULL);	
+	while (1)
+	{
+		if (philo->id % 2 == 0)
+			usleep(100);
+		if (pthread_mutex_lock(&philo->fork))
+			return (NULL);
+		if (pthread_mutex_lock(&philo->arg->timelock))
+			return (NULL);
+		if (philo->arg->time == 0)
+			philo->arg->time = ft_time();
+		if (pthread_mutex_unlock(&philo->arg->timelock))
+			return (NULL);	
+		ft_print(philo, "takes a fork");
+		if (pthread_mutex_lock(&philo->arg->philos[philo->id % philo->arg->nph].fork))
+			return (NULL);
+		ft_print(philo, "takes a fork");
+		philo->eat_t = ft_time() - philo->arg->time;
+		ft_print(philo, "is eating");
+		while (philo->arg->te > ft_time() - philo->arg->time)
+			usleep(10);
+		if (pthread_mutex_unlock(&philo->arg->philos[philo->id % philo->arg->nph].fork))
+			return (NULL);
+		if (pthread_mutex_unlock(&philo->fork))
+			return (NULL);
+		
+	}	
 	return (NULL);
 }
 
@@ -95,6 +115,7 @@ int ft_initialize(char **av, t_args *args)
 		i++;
 	}
 	pthread_mutex_init(&args->timelock, NULL);
+	pthread_mutex_init(&args->print, NULL);
 	i = 0;
 	args->flah_nbr = 0;
 	while (i < args->nph)
@@ -104,10 +125,32 @@ int ft_initialize(char **av, t_args *args)
 		i++;
 	}
 	i = 0;
-	while (i < args->nph)
+	/*while (i < args->nph)
 	{
 		pthread_join(args->philos[i].ph, NULL);
 		i++;
+	}*/
+	return (0);
+}
+
+int	check_dead(t_args args)
+{
+	int i;
+
+	i = 0;
+	while (1)
+	{
+		i = 0;
+		while (i < args.nph)
+		{
+			if (ft_time() - args.time - args.philos[i].eat_t >= args.td)
+			{
+
+				printf("%ld philo %d died", ft_time() - args.time, args.philos[i].id);
+				return (1);
+			}
+			i++;	
+		}
 	}
 	return (0);
 }
@@ -121,4 +164,6 @@ int	main(int ac, char **av)
 		return (printf("Arguments is not digits\n"));	
 	if (ft_initialize(av, &args))
 		return (printf("Failed to initialize args\n"));
+	if (check_dead(args))
+		return (0);
 }
