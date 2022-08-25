@@ -24,6 +24,8 @@ typedef struct s_philo
 	pthread_t	ph;
 	int			id;
 	int			eat_t;
+	int			is_eat;
+	long			o_eat;
 	pthread_mutex_t			fork;
 	struct s_args *arg;
 }	t_philo;
@@ -38,8 +40,10 @@ typedef struct s_args
 	pthread_mutex_t t;
 	int fi_t;
 	long time;
+	long time2;
 	int flah_nbr;
 	pthread_mutex_t print;
+	pthread_mutex_t eat;
 	pthread_mutex_t timelock;
 	t_philo *philos;
 }	t_args;
