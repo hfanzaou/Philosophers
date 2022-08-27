@@ -28,6 +28,7 @@ typedef struct s_philo
 	long			o_eat;
 	pthread_mutex_t			fork;
 	struct s_args *arg;
+	long time2;
 }	t_philo;
 
 typedef struct s_args
@@ -40,12 +41,13 @@ typedef struct s_args
 	pthread_mutex_t t;
 	int fi_t;
 	long time;
-	long time2;
 	int flah_nbr;
 	pthread_mutex_t print;
 	pthread_mutex_t eat;
 	pthread_mutex_t timelock;
 	t_philo *philos;
+	pthread_mutex_t deadlock;
+	int dead;
 }	t_args;
 
 int				ft_isdigit(int c);
