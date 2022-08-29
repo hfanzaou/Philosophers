@@ -12,7 +12,7 @@
 
 SRCS = ft_atoi.c ft_isdigit.c philo.c
 NAME = philo
-CFLAGS = -Wall -Werror -Wextra
+CFLAGS = -Wall -Werror -Wextra -fsanitize=thread
 
 all : $(NAME)
 
