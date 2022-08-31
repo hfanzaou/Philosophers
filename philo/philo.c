@@ -66,10 +66,21 @@ int if_all_eat(t_philo *philo)
 	return (l);
 }
 
+int put_0(t_philo *philo)
+{
+	int i;
+
+	i = 0;
+	while (i < philo->arg->nph)
+	{
+		philo[i].deadc = 0;
+		i++;
+	}
+	return (0);	
+}
 int	check_dead(t_philo *philo)
 {
 	int i;
-	int j;
 
 	i = 0;
 	while (1)
@@ -77,20 +88,12 @@ int	check_dead(t_philo *philo)
 		i = 0;
 		while (i < philo->arg->nph)
 		{
-			if ((ft_time() -  philo->arg->time - philo[i].eat_t >= philo->arg->td) && philo[i].is_eat == 0 
-			&& philo[i].nofmeals < philo->arg->ne)
+			if ((ft_time() -  philo->arg->time - philo[i].eat_t >= philo->arg->td) && philo[i].is_eat == 0)
 			{
 				ft_print(&philo[i], "died");
-				j = 0;
-				while (i < philo->arg->nph)
-				{
-					philo[i].deadc = 0;
-					j++;
-				}
+				put_0(philo);
 				return (1);
 			}
-			else if (if_all_eat(philo) == philo->arg->nph)
-				return (1);
 			i++;
 		}
 	}
@@ -105,7 +108,7 @@ int	ft_sleep(t_philo *philo)
 	time = ft_time();
 	while (philo->arg->ts > ft_time() - time)
 	{
-		if (philo->deadc== 0)
+		if (philo->deadc == 0)
 			return (1);
 		usleep(100);
 	}
@@ -120,26 +123,17 @@ void *routine(void *philos)
 	philo = (t_philo *)philos;
 	while (1)
 	{
-		if (philo->nofmeals >= philo->arg->ne)
-		{
-			ft_print(philo, "is done");
-			return (NULL);
-		}
 		if (philo->id % 2 == 0)
 			usleep(100);
 		if (pthread_mutex_lock(&philo->fork))
 			return (NULL);
 		ft_print(philo, "takes a fork 1");
 		if (pthread_mutex_lock(&philo->arg->philos[philo->id % philo->arg->nph].fork))
-			return (NULL);	
-		philo->is_eat = 1;
-		if (pthread_mutex_lock(&philo->arg->arg))
-			return(NULL);	
-		philo->eat_t = ft_time() - philo->arg->time;
-		philo->o_eat = ft_time();
-		if (pthread_mutex_unlock(&philo->arg->arg))
-			return(NULL);
+			return (NULL);
 		ft_print(philo, "takes a fork 2");
+		philo->eat_t = ft_time() - philo->arg->time;
+		philo->o_eat = ft_time();	
+		philo->is_eat = 1;
 		ft_print(philo, "is eating");
 		while (philo->arg->te > ft_time() - philo->o_eat)
 		{
@@ -153,11 +147,6 @@ void *routine(void *philos)
 			return (NULL);
 		if (pthread_mutex_unlock(&philo->fork))
 			return (NULL);
-		if (philo->nofmeals >= philo->arg->ne)
-		{
-			ft_print(philo, "is done");
-			return (NULL);
-		}		
 		if (ft_sleep(philo))
 			return (NULL);
 	}	
@@ -177,6 +166,8 @@ t_args *ft_initialize(char **av)
 	args->ts = ft_atoi(av[4]);
 	if (av[5])
 		args->ne = ft_atoi(av[5]);
+	else
+		args->ne = -1;	
 	if (!(args->philos = malloc(sizeof(t_philo) * args->nph)))
 		return (NULL);
 	args->flah_nbr = args->nph;
