@@ -17,6 +17,8 @@
 # include <stdio.h>
 # include <unistd.h>
 # include <sys/time.h>
+# include <string.h>
+
 struct s_args;
 
 typedef struct s_philo
@@ -30,7 +32,6 @@ typedef struct s_philo
 	pthread_mutex_t	fork;
 	struct s_args	*arg;
 	long			time2;
-	int				deadc;
 }					t_philo;
 
 typedef struct s_args
@@ -40,19 +41,16 @@ typedef struct s_args
 	int				te;
 	int				ts;
 	int				ne;
-	pthread_mutex_t	t;
-	int				fi_t;
+	int				all_eat;
 	long			time;
-	int 			flah_nbr;
 	pthread_mutex_t	print;
-	pthread_mutex_t eat;
 	pthread_mutex_t timelock;
 	t_philo			*philos;
-	pthread_mutex_t deadlock;
 	pthread_mutex_t arg;
-	int				dead;
 }					t_args;
 
 int				ft_isdigit(int c);
 long long int	ft_atoi(const char *str);
 # endif
+
+//0x7b5000000010
