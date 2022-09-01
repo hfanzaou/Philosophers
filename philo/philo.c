@@ -38,16 +38,18 @@ long ft_time()
 	return(time.tv_sec * 1000 + time.tv_usec / 1000);
 }
 
-void	ft_print(t_philo *philo, const char *s)
+int	ft_print(t_philo *philo, const char *s)
 {
 	if (pthread_mutex_lock(&philo->arg->print))
-			return ;		
-	if (philo->deadc == 0)
-		return ;
+			return (1);
 	printf("%ld ", ft_time() - philo->arg->time);		
 	printf("philo %d %s\n", philo->id, s);
-	if (pthread_mutex_unlock(&philo->arg->print))
-			return ;	
+	if (strcmp("died", s) || philo->arg->all_eat != philo->arg->nph)
+	{
+		if (pthread_mutex_unlock(&philo->arg->print))
+			return (1);
+	}
+	return (0);	
 }
 
 int if_all_eat(t_philo *philo)
@@ -63,21 +65,10 @@ int if_all_eat(t_philo *philo)
 			l++;
 		i++;	
 	}
+	philo->arg->all_eat = l;
 	return (l);
 }
 
-int put_0(t_philo *philo)
-{
-	int i;
-
-	i = 0;
-	while (i < philo->arg->nph)
-	{
-		philo[i].deadc = 0;
-		i++;
-	}
-	return (0);	
-}
 int	check_dead(t_philo *philo)
 {
 	int i;
@@ -88,12 +79,19 @@ int	check_dead(t_philo *philo)
 		i = 0;
 		while (i < philo->arg->nph)
 		{
+			if (pthread_mutex_lock(&philo->arg->arg))
+				return (1);
 			if ((ft_time() -  philo->arg->time - philo[i].eat_t >= philo->arg->td) && philo[i].is_eat == 0)
 			{
+				if (pthread_mutex_unlock(&philo->arg->arg))
+					return (1);
 				ft_print(&philo[i], "died");
-				put_0(philo);
 				return (1);
 			}
+			if (if_all_eat(philo) == philo->arg->nph)
+				return (1);
+			if (pthread_mutex_unlock(&philo->arg->arg))
+					return (1);
 			i++;
 		}
 	}
@@ -104,45 +102,57 @@ int	ft_sleep(t_philo *philo)
 {
 	long	time;
  
+	
 	ft_print(philo, "is sleeping");
 	time = ft_time();
 	while (philo->arg->ts > ft_time() - time)
-	{
-		if (philo->deadc == 0)
-			return (1);
 		usleep(100);
-	}
 	ft_print(philo, "is thinking");
 	return (0);	
 }
+int	change_lock(int *i, t_args *args, int va)
+{
+	if (pthread_mutex_lock(&args->arg))
+		return (1);
+	*i = va;
+	if (pthread_mutex_unlock(&args->arg))
+		return (1);
+	return (0);		
+}
 
+int	ft_eat(t_philo *philo)
+{
+	if (change_lock(&philo->eat_t, philo->arg, ft_time() - philo->arg->time))
+		return (1);	
+	philo->o_eat = ft_time();
+	if (change_lock(&philo->is_eat, philo->arg, 1))
+		return (1);
+	ft_print(philo, "is eating");
+	while (philo->arg->te > ft_time() - philo->o_eat)
+		usleep(100);
+	if (change_lock(&philo->is_eat, philo->arg, 0))
+		return (1);
+	if (change_lock(&philo->nofmeals, philo->arg, philo->nofmeals + 1))
+		return (1);
+	return (0);
+}
 void *routine(void *philos)
 {
 	t_philo *philo;
 
 	philo = (t_philo *)philos;
+	if (philo->id % 2 == 0)
+		usleep(100);
 	while (1)
 	{
-		if (philo->id % 2 == 0)
-			usleep(100);
 		if (pthread_mutex_lock(&philo->fork))
 			return (NULL);
 		ft_print(philo, "takes a fork 1");
 		if (pthread_mutex_lock(&philo->arg->philos[philo->id % philo->arg->nph].fork))
 			return (NULL);
 		ft_print(philo, "takes a fork 2");
-		philo->eat_t = ft_time() - philo->arg->time;
-		philo->o_eat = ft_time();	
-		philo->is_eat = 1;
-		ft_print(philo, "is eating");
-		while (philo->arg->te > ft_time() - philo->o_eat)
-		{
-			if (philo->deadc == 0)
-				return (NULL);
-			usleep(100);
-		}
-		philo->is_eat = 0;
-		philo->nofmeals++;
+		if (ft_eat(philo))
+			return (NULL);
 		if (pthread_mutex_unlock(&philo->arg->philos[philo->id % philo->arg->nph].fork))
 			return (NULL);
 		if (pthread_mutex_unlock(&philo->fork))
@@ -170,13 +180,10 @@ t_args *ft_initialize(char **av)
 		args->ne = -1;	
 	if (!(args->philos = malloc(sizeof(t_philo) * args->nph)))
 		return (NULL);
-	args->flah_nbr = args->nph;
 	args->time = ft_time();
-	args->dead = 1;
 	while (i < args->nph)
 	{
 		args->philos[i].nofmeals = 0;
-		args->philos[i].deadc = 1;
 		args->philos[i].o_eat = 0;
 		args->philos[i].is_eat = 0;
 		args->philos[i].eat_t = 0;
@@ -185,23 +192,17 @@ t_args *ft_initialize(char **av)
 		pthread_mutex_init(&args->philos[i].fork, NULL);
 		i++;
 	}
+	pthread_mutex_init(&args->arg, NULL);
 	pthread_mutex_init(&args->timelock, NULL);
 	pthread_mutex_init(&args->print, NULL);
 	i = 0;
 	while (i < args->nph)
 	{
 		pthread_create(&args->philos[i].ph, NULL, routine, &args->philos[i]);
+		pthread_detach(args->philos[i].ph);
 		usleep(10);
 		i++;
 	}
-	i = 0;
-	/*
-	while (i < args->nph)
-	{
-		//void *k;
-		pthread_join(args->philos[i].ph, NULL);
-		i++;
-	}*/
 	return (args);
 }
 
