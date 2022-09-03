@@ -19,7 +19,7 @@
 # include <sys/time.h>
 # include <string.h>
 
-struct s_args;
+struct	s_args;
 
 typedef struct s_philo
 {
@@ -27,11 +27,10 @@ typedef struct s_philo
 	int				id;
 	int				eat_t;
 	int				is_eat;
-	long			o_eat;
-	int 			nofmeals;
+	int				nofmeals;
 	pthread_mutex_t	fork;
 	struct s_args	*arg;
-	long			time2;
+	long			o_eat;
 }					t_philo;
 
 typedef struct s_args
@@ -41,16 +40,23 @@ typedef struct s_args
 	int				te;
 	int				ts;
 	int				ne;
-	int				all_eat;
 	long			time;
 	pthread_mutex_t	print;
-	pthread_mutex_t timelock;
+	pthread_mutex_t	timelock;
 	t_philo			*philos;
-	pthread_mutex_t arg;
+	pthread_mutex_t	arg;
 }					t_args;
 
-int				ft_isdigit(int c);
-long long int	ft_atoi(const char *str);
-# endif
+int		ft_isdigit(int c);
+t_args	*ft_initialize(char **av);
+int		ft_atoi(const char *str);
+void	*routine(void *philos);
+long	ft_time(void);
+int		ft_print(t_philo *philo, const char *s);
+int		check_exit(t_philo *philo);
+int		ft_sleep(t_philo *philo);
+int		change_lock(int *i, t_philo *philo, int va);
+int		if_all_eat(t_philo *philo);
+#endif
 
 //0x7b5000000010

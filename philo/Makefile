@@ -10,11 +10,18 @@
 #                                                                              #
 # **************************************************************************** #
 
-SRCS = ft_atoi.c ft_isdigit.c philo.c
+SRCS = srcs/ft_atoi.c srcs/ft_isdigit.c srcs/philo.c srcs/ft_initialize.c 
+		srcs/utils.c srcs/check_death.c
+OSRCS = $(SRCS:.c=.o)		
 NAME = philo
 CFLAGS = -Wall -Werror -Wextra
+CC = gcc
 
-all : $(NAME)
+all : $(NAME) $(OSRCS)
 
-$(NAME) : $(SRCS)
-	$(CC) $(CFLAGS) $(SRCS) -o $(NAME)
+$(NAME) : $(OSRCS)
+	
+$(OSRCS) : $(SRCS)
+	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -c $@ -o $(NAME) 
+
