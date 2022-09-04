@@ -6,11 +6,11 @@
 /*   By: hfanzaou <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/02 02:56:54 by hfanzaou          #+#    #+#             */
-/*   Updated: 2022/09/02 02:57:07 by hfanzaou         ###   ########.fr       */
+/*   Updated: 2022/09/04 04:11:20 by hfanzaou         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "philo.h"
+#include "../philo.h"
 
 int	ft_print(t_philo *philo, const char *s)
 {
@@ -18,13 +18,12 @@ int	ft_print(t_philo *philo, const char *s)
 		return (1);
 	printf("%ld ", ft_time() - philo->arg->time);
 	printf("philo %d %s\n", philo->id, s);
-	if (strcmp("died", s)
-		|| (strcmp("is done", s) && if_all_eat(philo) < philo->arg->ne))
+	if (ft_strcmp("died", s) && philo->arg->count != philo->arg->nph)
 	{
 		if (pthread_mutex_unlock(&philo->arg->print))
-			return (1);
+			return (0);
 	}
-	return (0);
+	return (1);
 }
 
 long	ft_time(void)
@@ -52,6 +51,7 @@ int	change_lock(int *i, t_philo *philo, int va)
 	if (pthread_mutex_lock(&philo->arg->arg))
 		return (1);
 	*i = va;
-	pthread_mutex_unlock(&philo->arg->arg);
+	if (pthread_mutex_unlock(&philo->arg->arg))
+		return (1);
 	return (0);
 }

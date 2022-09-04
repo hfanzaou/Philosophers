@@ -10,18 +10,23 @@
 #                                                                              #
 # **************************************************************************** #
 
-SRCS = srcs/ft_atoi.c srcs/ft_isdigit.c srcs/philo.c srcs/ft_initialize.c 
-		srcs/utils.c srcs/check_death.c
+SRCS = philo.c srcs/ft_initialize.c srcs/utils.c srcs/check_exit.c srcs/utils2.c
 OSRCS = $(SRCS:.c=.o)		
 NAME = philo
-CFLAGS = -Wall -Werror -Wextra
+CFLAGS = -Wall -Werror -Wextra #-fsanitize=thread
 CC = gcc
 
-all : $(NAME) $(OSRCS)
+all : $(NAME)
 
-$(NAME) : $(OSRCS)
-	
-$(OSRCS) : $(SRCS)
+$(NAME)	: $(OSRCS)
+	$(CC) $(CFLAGS) $(OSRCS) -o $@
+%.o:%.c
 	$(CC) $(CFLAGS) -c $< -o $@
-	$(CC) $(CFLAGS) -c $@ -o $(NAME) 
 
+clean :
+	rm -rf $(OSRCS)
+
+fclean : clean
+	rm -rf $(NAME)
+
+re : fclean all

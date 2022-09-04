@@ -33,13 +33,15 @@ int	check_av(char **av)
 
 int	ft_eat(t_philo *philo)
 {
+	long	time;
+
 	if (change_lock(&philo->eat_t, philo, ft_time() - philo->arg->time))
 		return (1);
-	philo->o_eat = ft_time();
+	time = ft_time();
 	if (change_lock(&philo->is_eat, philo, 1))
 		return (1);
 	ft_print(philo, "is eating");
-	while (philo->arg->te > ft_time() - philo->o_eat)
+	while (philo->arg->te > ft_time() - time)
 		usleep(100);
 	if (change_lock(&philo->is_eat, philo, 0))
 		return (1);
@@ -52,11 +54,11 @@ int	ft_forks(t_philo *philo)
 {
 	if (pthread_mutex_lock(&philo->fork))
 		return (1);
-	ft_print(philo, "takes a fork 1");
+	ft_print(philo, "takes a fork");
 	if (pthread_mutex_lock(&philo->arg->philos
 			[philo->id % philo->arg->nph].fork))
 		return (1);
-	ft_print(philo, "takes a fork 2");
+	ft_print(philo, "takes a fork");
 	if (ft_eat(philo))
 		return (1);
 	if (pthread_mutex_unlock(&philo->arg->philos
@@ -78,7 +80,7 @@ void	*routine(void *philos)
 	{
 		if (ft_forks(philo))
 			return (NULL);
-		if (philo->nofmeals == philo->arg->ne)
+		if (philo->nofmeals == philo->arg->nof)
 		{
 			ft_print(philo, "is done");
 			return (NULL);
@@ -99,7 +101,13 @@ int	main(int ac, char **av)
 		return (printf("Arguments is not digits\n"));
 	args = ft_initialize(av);
 	if (!args)
+	{
+		free(args);
 		return (printf("Failed to initialize args\n"));
+	}
 	if (check_exit(args->philos))
+	{
+		free(args);
 		return (0);
+	}
 }

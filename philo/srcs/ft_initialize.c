@@ -6,10 +6,10 @@
 /*   By: hfanzaou <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/02 02:33:55 by hfanzaou          #+#    #+#             */
-/*   Updated: 2022/09/02 02:34:26 by hfanzaou         ###   ########.fr       */
+/*   Updated: 2022/09/04 04:11:12 by hfanzaou         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
-#include "philo.h"
+#include "../philo.h"
 
 t_args	*init_args(char **av)
 {
@@ -25,9 +25,10 @@ t_args	*init_args(char **av)
 	args->te = ft_atoi(av[3]);
 	args->ts = ft_atoi(av[4]);
 	if (av[5])
-		args->ne = ft_atoi(av[5]);
+		args->nof = ft_atoi(av[5]);
 	else
-		args->ne = -1;
+		args->nof = -1;
+	args->count = 0;
 	args->time = ft_time();
 	return (args);
 }
@@ -87,7 +88,7 @@ t_args	*ft_initialize(char **av)
 			return (NULL);
 		if (pthread_detach(args->philos[i].ph))
 			return (NULL);
-		usleep(10);
+		usleep(100);
 		i++;
 	}
 	return (args);
